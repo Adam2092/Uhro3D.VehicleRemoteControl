@@ -48,6 +48,9 @@ void Vehicle::RegisterObject(Context* context)
     URHO3D_ATTRIBUTE("Controls Yaw", float, controls_.yaw_, 0.0f, AM_DEFAULT);
     URHO3D_ATTRIBUTE("Controls Pitch", float, controls_.pitch_, 0.0f, AM_DEFAULT);
     URHO3D_ATTRIBUTE("Steering", float, steering_, 0.0f, AM_DEFAULT);
+    /*The following lines are added by Yue Kang*/
+    URHO3D_ATTRIBUTE("Acc pedal reading", float, accPedalReading, 0.0f, AM_DEFAULT);
+    URHO3D_ATTRIBUTE("Steering reading", float, steeringReading, 0.0f, AM_DEFAULT);
     // Register wheel node IDs as attributes so that the wheel nodes can be reaquired on deserialization. They need to be tagged
     // as node ID's so that the deserialization code knows to rewrite the IDs in case they are different on load than on save
     URHO3D_ATTRIBUTE("Front Left Node", unsigned, frontLeftID_, 0, AM_DEFAULT | AM_NODEID);
@@ -71,20 +74,42 @@ void Vehicle::ApplyAttributes()
     GetWheelComponents();
 }
 
+bool Vehicle::setSteering(float value)
+{
+    steeringReading = value;
+    return 0;
+}
+
+bool Vehicle::setAccPedal(float value)
+{
+    accPedalReading = value;
+    return 0;
+}
+
 void Vehicle::FixedUpdate(float timeStep)
 {
     float newSteering = 0.0f;
     float accelerator = 0.0f;
 
-    // Read controls
-    if (controls_.buttons_ & CTRL_LEFT)
-        newSteering = -1.0f;
-    if (controls_.buttons_ & CTRL_RIGHT)
-        newSteering = 1.0f;
-    if (controls_.buttons_ & CTRL_FORWARD)
-        accelerator = 1.0f;
-    if (controls_.buttons_ & CTRL_BACK)
-        accelerator = -0.5f;
+
+    if(isManualControl) // Manual control by WSAD keyboard
+    {
+        // Read controls
+        if (controls_.buttons_ & CTRL_LEFT)
+            newSteering = -1.0f;
+        if (controls_.buttons_ & CTRL_RIGHT)
+            newSteering = 1.0f;
+        if (controls_.buttons_ & CTRL_FORWARD)
+            accelerator = 1.0f;
+        if (controls_.buttons_ & CTRL_BACK)
+            accelerator = -0.5f;
+    }
+    else // Remote control by messages (currently not functioning)
+    {
+        // Read controls
+        newSteering = steeringReading;
+        accelerator = accPedalReading;
+    }
 
     // When steering, wake up the wheel rigidbodies so that their orientation is updated
     if (newSteering != 0.0f)
@@ -94,7 +119,9 @@ void Vehicle::FixedUpdate(float timeStep)
         steering_ = steering_ * 0.95f + newSteering * 0.05f;
     }
     else
+    {
         steering_ = steering_ * 0.8f + newSteering * 0.2f;
+    }
 
     // Set front wheel angles
     Quaternion steeringRot(0, steering_ * MAX_WHEEL_ANGLE, 0);

@@ -79,4 +79,7 @@ private:
     opendlv::proxy::GroundSteeringRequest gsr;
     int CID;
     float FREQ;
+
+    // Cluon SharedMemory for image transfer
+    std::shared_ptr<cluon::SharedMemory> shm;
 };

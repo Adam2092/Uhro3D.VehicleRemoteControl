@@ -328,10 +328,9 @@ void VehicleRemoteControl::HandleUpdate(StringHash eventType, VariantMap& eventD
             }
             else if(od4->isRunning())
             {
-                vehicle_->controls_.Set(CTRL_FORWARD, ppr.position()>0 ? true : false);
-                vehicle_->controls_.Set(CTRL_BACK, ppr.position()<0 ? true : false);
-                vehicle_->controls_.Set(CTRL_LEFT, gsr.groundSteering()<0 ? true : false);
-                vehicle_->controls_.Set(CTRL_RIGHT, gsr.groundSteering()>0 ? true : false);
+//                // TODO: overwrite this by implementing a dynamic model for the vehicle
+                vehicle_->setSteering(gsr.groundSteering());
+                vehicle_->setAccPedal(ppr.position());
             }
 
             // Add yaw & pitch from the mouse motion or touch input. Used only for the camera, does not affect motion

@@ -77,8 +77,16 @@ public:
     /*This is moved into public var by Yue Kang*/
     WeakPtr<RigidBody> hullBody_;
 
+    /*The following lines are added by Yue Kang*/
+
     /// Toggle of manual control / message-based remote control
     bool isManualControl;
+
+    /// Receive steering angle value from od4 messages
+    bool setSteering(float);
+
+    /// Receive acc pedal value from od4 messages
+    bool setAccPedal(float);
 
 private:
     /// Initialize a wheel and remember its scene node and ID.
@@ -122,4 +130,11 @@ private:
 
     /// Current left/right steering amount (-1 to 1).
     float steering_{};
+
+    /*The following lines are added by Yue Kang*/
+
+    /// Acc pedal from odvd message.
+    float accPedalReading;
+    /// Steering angle from odvd message.
+    float steeringReading;
 };
