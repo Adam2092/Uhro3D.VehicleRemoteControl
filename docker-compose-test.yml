@@ -1,0 +1,11 @@
+version: '2'
+services:
+    urho3d-test-control:
+        image: urho3d-test-new
+        network_mode: "host"
+        privileged: true
+        volumes:
+        -   /tmp/.X11-unix:/tmp/.X11-unix
+        environment:
+        -   DISPLAY=$DISPLAY
+        command: "/opt/testRemoteControl --cid=113 --freq=50"
