@@ -51,6 +51,17 @@ void Vehicle::RegisterObject(Context* context)
     /*The following lines are added by Yue Kang*/
     URHO3D_ATTRIBUTE("Acc pedal reading", float, accPedalReading, 0.0f, AM_DEFAULT);
     URHO3D_ATTRIBUTE("Steering reading", float, steeringReading, 0.0f, AM_DEFAULT);
+
+    URHO3D_ATTRIBUTE("Camera Offset X", float, cameraOffsetX, 0.0f, AM_DEFAULT);
+    URHO3D_ATTRIBUTE("Camera Offset Y", float, cameraOffsetY, 0.6f, AM_DEFAULT);
+    URHO3D_ATTRIBUTE("Camera Offset Z", float, cameraOffsetZ, 1.4f, AM_DEFAULT);
+    URHO3D_ATTRIBUTE("Camera Yaw angle", float, cameraYaw, 0.0f, AM_DEFAULT);
+    URHO3D_ATTRIBUTE("Camera Pitch angle", float, cameraPitch, 0.0f, AM_DEFAULT);
+    URHO3D_ATTRIBUTE("Camera Roll angle", float, cameraRoll, 0.0f, AM_DEFAULT);
+
+    URHO3D_ATTRIBUTE("Vehicle Node", unsigned, vehicleBodyID_, 0, AM_DEFAULT | AM_NODEID);
+    URHO3D_ATTRIBUTE("Camera sensor Node", unsigned, cameraSensorBodyID_, 0, AM_DEFAULT | AM_NODEID);
+
     // Register wheel node IDs as attributes so that the wheel nodes can be reaquired on deserialization. They need to be tagged
     // as node ID's so that the deserialization code knows to rewrite the IDs in case they are different on load than on save
     URHO3D_ATTRIBUTE("Front Left Node", unsigned, frontLeftID_, 0, AM_DEFAULT | AM_NODEID);
@@ -72,6 +83,10 @@ void Vehicle::ApplyAttributes()
     hullBody_ = node_->GetComponent<RigidBody>();
 
     GetWheelComponents();
+
+    cameraSensorNode_ = scene->GetNode(cameraSensorBodyID_);
+    cameraSensorBody_ = cameraSensorNode_->GetComponent<RigidBody>();
+
 }
 
 bool Vehicle::setSteering(float value)
@@ -170,6 +185,43 @@ void Vehicle::Init()
     InitWheel("RearRight", Vector3(0.6f, -0.4f, -0.3f), rearRight_, rearRightID_);
 
     GetWheelComponents();
+
+    // Init Camera in similar way of InitWheel()
+    cameraSensorNode_ = GetScene()->CreateChild("CameraSensor");
+
+    cameraOffsetX = 0.0f;
+    cameraOffsetY = 0.6f;
+    cameraOffsetZ = 0.45f; // offsets are in local frame
+
+    cameraSensorNode_->SetPosition(node_->LocalToWorld(getCameraOffset()));
+    cameraSensorNode_->SetScale(Vector3(0.2f, 0.2f, 0.2f));
+    cameraSensorBodyID_ = cameraSensorNode_->GetID();
+
+    // The following "CS_"s stand for CameraSensor locally
+    auto* CS_Object = cameraSensorNode_->CreateComponent<StaticModel>();
+    cameraSensorBody_ = cameraSensorNode_->CreateComponent<RigidBody>();
+    auto* CS_Shape = cameraSensorNode_->CreateComponent<CollisionShape>();
+    auto* CS_Constraint = cameraSensorNode_->CreateComponent<Constraint>();
+
+    CS_Object->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    CS_Object->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
+    CS_Object->SetCastShadows(true);
+    CS_Shape->SetBox(Vector3::ONE);
+    cameraSensorBody_->SetMass(0.01f);
+    cameraSensorBody_->SetLinearDamping(0.2f); // Some air resistance
+    cameraSensorBody_->SetAngularDamping(0.5f);
+    cameraSensorBody_->SetCollisionLayer(1);
+
+    CS_Constraint->SetConstraintType(CONSTRAINT_HINGE);
+    CS_Constraint->SetOtherBody(GetComponent<RigidBody>()); // Connect to the hull body
+    CS_Constraint->SetWorldPosition(cameraSensorNode_->GetPosition()); 
+    CS_Constraint->SetDisableCollision(true);
+}
+
+const Vector3 Vehicle::getCameraOffset()
+{
+    // This returns offsets in local frame by default
+    return Vector3(cameraOffsetX, cameraOffsetY, cameraOffsetZ);
 }
 
 void Vehicle::InitWheel(const String& name, const Vector3& offset, WeakPtr<Node>& wheelNode, unsigned& wheelNodeID)

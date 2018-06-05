@@ -45,6 +45,7 @@
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
+#include <Urho3D/UI/Window.h>
 
 #include "Vehicle.h"
 #include "VehicleRemoteControl.h"
@@ -65,6 +66,10 @@
 #include <memory>
 
 const float CAMERA_DISTANCE = 10.0f;
+
+// Temp global counter for cout debug in HandlePostUpdate
+// Will be removed
+//unsigned count = 0;
 
 URHO3D_DEFINE_APPLICATION_MAIN(VehicleRemoteControl)
 
@@ -160,6 +165,9 @@ void VehicleRemoteControl::CreateScene()
     cameraNode_ = new Node(context_);
     auto* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetFarClip(500.0f);
+
+    /* Added another viewport for camera sensor here by Yue Kang*/
+    GetSubsystem<Renderer>()->SetNumViewports(2);
     GetSubsystem<Renderer>()->SetViewport(0, new Viewport(context_, scene_, camera));
 
     // Create static scene content. First create a zone for ambient lighting and fog control
@@ -226,6 +234,13 @@ void VehicleRemoteControl::CreateScene()
         std::cout << "WARNING from In VehicleRemoteControl::CreateScene(): NO OD4 SESSION RUNNING!!!" << std::endl;
     }
     else std::cout << "VehicleRemoteControl::CreateScene() OK." << std::endl;
+
+    // Test of having a separate window 
+    Window* cameraWindow = new Window(context_);
+//    GetSubsystem<UI>()->GetRoot()->AddChild(cameraWindow);
+    cameraWindow->SetSize(640,480);
+    cameraWindow->SetName("Camera Image");
+//    GetSubsystem<UI>()->GetRoot()->AddChild(cameraWindow);
 }
 
 void VehicleRemoteControl::CreateVehicle()
@@ -260,6 +275,17 @@ void VehicleRemoteControl::CreateVehicle()
     {
         std::cout << "WARNING from In VehicleRemoteControl::CreateVehicle(): NO OD4 SESSION RUNNING!!!" << std::endl;
     }
+
+    // Create window for camera sensor viewport
+        // The following functions have been called in Vehicle::Init()
+        // vehicle_->cameraSensorNode_ = scene_->CreateChild("CameraSensor");
+    //    vehicle_->cameraSensorNode_->SetPosition(/*coor*/);
+    auto* cameraSensor = vehicle_->cameraSensorNode_->CreateComponent<Camera>();
+    cameraSensor->SetFarClip(300.0f); // Currently the same with the main viewport, might be customized afterwards
+    auto* graphics = GetSubsystem<Graphics>();
+    SharedPtr<Viewport> CS_viewport(new Viewport(context_, scene_, cameraSensor, IntRect(graphics->GetWidth()-32-240, 32, graphics->GetWidth()-32, 32+160)));
+    GetSubsystem<Renderer>()->SetViewport(1, CS_viewport);
+
 }
 
 void VehicleRemoteControl::CreateInstructions()
@@ -309,6 +335,11 @@ void VehicleRemoteControl::HandleUpdate(StringHash eventType, VariantMap& eventD
     if (vehicle_)
     {
         auto* ui = GetSubsystem<UI>();
+//        if (input->GetKeyPress(KEY_Q))
+//        {
+//            bool mouseLocked = eventData[MouseModeChanged::P_MOUSELOCKED].GetBool();
+//            input->SetMouseVisible(!mouseLocked);
+//        }
 
         // Toggle between the two control
         if (input->GetKeyPress(KEY_C)) 
@@ -390,42 +421,6 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
 
     Node* vehicleNode = vehicle_->GetNode();
 
-//    // Send od4 messages
-//    if(od4->isRunning())
-//    {
-//        WeakPtr<RigidBody> body = vehicle_->hullBody_;
-//        body->ReAddBodyToWorld();
-
-//        Vector3 LinearVel = body->GetLinearVelocity();
-////        Vector3 LinearVel(1.1f, 1.2f, 1.3f); //only for testing
-//        Vector3 AngularVel = body->GetAngularVelocity();
-//        opendlv::sim::KinematicState kinematicMsg;
-//        kinematicMsg.vx((float)LinearVel.x_);
-//        kinematicMsg.vy(LinearVel.y_);
-//        kinematicMsg.vz(LinearVel.z_);
-//        kinematicMsg.rollRate(AngularVel.x_);
-//        kinematicMsg.pitchRate(AngularVel.y_);
-//        kinematicMsg.yawRate(AngularVel.z_);
-////        std::cout << "Kinematic message sent. Example: vx = " << LinearVel.x_ << std::endl;
-//        od4->send(kinematicMsg);
-
-////      Vector3 pos = vehicleNode->GetWorldPosition().Normalized();
-////      Quaternion rota = vehicleNode->GetWorldRotation();
-//        Vector3 pos = body->GetPosition();//.Normalized(); //necessary?
-//        Quaternion rota = body->GetRotation();
-//        opendlv::sim::Frame msg;
-//        msg.x(pos.x_);
-//        msg.y(pos.y_);
-//        msg.z(pos.z_);
-//        msg.roll(rota.RollAngle());
-//        msg.pitch(rota.PitchAngle());
-//        msg.yaw(rota.YawAngle());
-////        std::cout << "Frame message sent. Example: x = " << pos.x_ << std::endl;
-//        od4->send(msg);
-
-//        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//    }
-
     // Send od4 messages in time-triggered way
     if(od4->isRunning())
     {
@@ -466,6 +461,7 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
     }//end of "send messages"
 
     // Physics update has completed. Position camera behind vehicle
+    // NOTICE: this "camera" represents the main viewport in the window, NOT the camera sensor on the car
     Quaternion dir(vehicleNode->GetRotation().YawAngle(), Vector3::UP);
     dir = dir * Quaternion(vehicle_->controls_.yaw_, Vector3::UP);
     dir = dir * Quaternion(vehicle_->controls_.pitch_, Vector3::RIGHT);
@@ -485,5 +481,13 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
     cameraNode_->SetPosition(cameraTargetPos);
     cameraNode_->SetRotation(dir);
 
-
+//    // Manual debug for camera sensor coordinates
+//    if (5 == count)
+//    {
+//        count = 0;
+//        std::cout << "CameraSonsorBody cordinates:" << std::endl;
+//        Vector3 pos2 = vehicle_->cameraSensorBody_->GetPosition();
+//        std::cout << "(" << std::setprecision(2) << pos2.x_ << ", " << std::setprecision(2) << pos2.y_ << ", " << std::setprecision(2) << pos2.z_ << ")" << std::endl;
+//    }
+//    else count++;
 }

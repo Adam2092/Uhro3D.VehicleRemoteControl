@@ -73,11 +73,24 @@ public:
     /// Movement controls.
     Controls controls_;
 
-    /// Hull and wheel hull rigid bodies.
+    /// Hull and wheel: hull rigid bodies.
     /*This is moved into public var by Yue Kang*/
     WeakPtr<RigidBody> hullBody_;
 
     /*The following lines are added by Yue Kang*/
+
+    /// Camera sensor body (one small block on top)
+    WeakPtr<RigidBody> cameraSensorBody_;
+    /// Camera sensor node
+    WeakPtr<Node> cameraSensorNode_;
+
+    /// Camera offset coordinates (in local frame)
+    float cameraOffsetX, cameraOffsetY, cameraOffsetZ;
+    /// Camera angle configuration
+    float cameraYaw, cameraPitch, cameraRoll;
+
+    /// Simple function to get offsets
+    const Vector3 getCameraOffset();
 
     /// Toggle of manual control / message-based remote control
     bool isManualControl;
@@ -110,13 +123,13 @@ private:
 
     /// Hull and wheel hull rigid bodies.
 //    WeakPtr<RigidBody> hullBody_; // Moved to public by Yue Kang
-    /// Hull and wheel front-left rigid bodies.
+    /// Hull and wheel: front-left rigid bodies.
     WeakPtr<RigidBody> frontLeftBody_;
-    /// Hull and wheel front-right rigid bodies.
+    /// Hull and wheel: front-right rigid bodies.
     WeakPtr<RigidBody> frontRightBody_;
-    /// Hull and wheel rear-left rigid bodies.
+    /// Hull and wheel: rear-left rigid bodies.
     WeakPtr<RigidBody> rearLeftBody_;
-    /// Hull and wheel rear-right rigid bodies.
+    /// Hull and wheel: rear-right rigid bodies.
     WeakPtr<RigidBody> rearRightBody_;
 
     /// ID of the front-left wheel scene node for serialization.
@@ -132,6 +145,11 @@ private:
     float steering_{};
 
     /*The following lines are added by Yue Kang*/
+
+    /// ID of the vehicle body
+    unsigned vehicleBodyID_{};
+    /// ID of the camera sensor body
+    unsigned cameraSensorBodyID_{};
 
     /// Acc pedal from odvd message.
     float accPedalReading;
