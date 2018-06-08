@@ -1,7 +1,7 @@
 version: '2'
 services:
     urho3d-test-control:
-        image: adam2092/urho3d-test-control:v0.0.3
+        image: adam2092/urho3d-test-control:v0.0.4
         network_mode: "host"
         privileged: true
         volumes:
@@ -9,3 +9,11 @@ services:
         environment:
         -   DISPLAY=$DISPLAY
         command: "/opt/testRemoteControl --cid=113 --freq=50"
+
+    urho3d-listener:
+        image: adam2092/urho3d-test-control:v0.0.4
+        depend_on:
+        - urho3d-test-control
+        network_mode: "host"
+        privileged: true
+        command: "/opt/Listener --cid=113"
