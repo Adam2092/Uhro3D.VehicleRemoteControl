@@ -14,7 +14,7 @@ int main(int argc, char** argv)
     auto cmdlArg = cluon::getCommandlineArguments(argc, argv);
     unsigned CID = 113;
 
-    if ( 0 == cmdlArg.cound("cid")) std::cout << "No CID argument detected, using default (--cid=113) now." << std::endl;
+    if ( 0 == cmdlArg.count("cid")) std::cout << "No CID argument detected, using default (--cid=113) now." << std::endl;
     else CID = std::stoi(cmdlArg["cid"]);
 
     cluon::OD4Session od4(CID, [](cluon::data::Envelope &&envelope) noexcept 
