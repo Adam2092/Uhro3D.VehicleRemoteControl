@@ -13,7 +13,8 @@ RUN mkdir build && \
     cmake .. && make && \
     cp -r ../Urho3D/bin/Data/ /tmp && \ 
     cp -r ../Urho3D/bin/CoreData /tmp &&\
-    cp ./testRemoteControl /tmp
+    cp ./testRemoteControl /tmp &&\
+    cp ./Listener /tmp
 
 # Deploy.
 FROM ubuntu:18.04
