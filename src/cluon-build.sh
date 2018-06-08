@@ -1,7 +1,16 @@
 #!/bin/bash
-if [$1 -eq ""] 
+if [ -z "$1" ]
 then
-    echo "Please indicate the name of your cpp/hpp files (without extention)"
+    echo "Please indicate the name of your cpp/hpp files (without extention)."
+    exit
+fi
+
+fileName="$1.odvd"
+if [ -f "$fileName" ]
+then
+    echo "$1.odvd file found."
+else
+    echo "$1.odvd file not found!"
     exit
 fi
 
