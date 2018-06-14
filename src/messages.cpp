@@ -957,6 +957,58 @@ double GeodeticWgs84Reading::longitude() const noexcept {
  */
 namespace opendlv { namespace proxy {
 
+int32_t ImageReading::ID() {
+    return 1055;
+}
+
+const std::string ImageReading::ShortName() {
+    return "ImageReading";
+}
+const std::string ImageReading::LongName() {
+    return "opendlv.proxy.ImageReading";
+}
+
+ImageReading& ImageReading::format(const std::string &v) noexcept {
+    m_format = v;
+    return *this;
+}
+std::string ImageReading::format() const noexcept {
+    return m_format;
+}
+
+ImageReading& ImageReading::width(const uint32_t &v) noexcept {
+    m_width = v;
+    return *this;
+}
+uint32_t ImageReading::width() const noexcept {
+    return m_width;
+}
+
+ImageReading& ImageReading::height(const uint32_t &v) noexcept {
+    m_height = v;
+    return *this;
+}
+uint32_t ImageReading::height() const noexcept {
+    return m_height;
+}
+
+ImageReading& ImageReading::data(const std::string &v) noexcept {
+    m_data = v;
+    return *this;
+}
+std::string ImageReading::data() const noexcept {
+    return m_data;
+}
+
+}}
+
+#include <messages.hpp>
+
+/*
+ * THIS IS AN AUTO-GENERATED FILE. DO NOT MODIFY AS CHANGES MIGHT BE OVERWRITTEN!
+ */
+namespace opendlv { namespace proxy {
+
 int32_t ImageReadingShared::ID() {
     return 14;
 }
@@ -1700,19 +1752,19 @@ const std::string Geolocation::LongName() {
     return "opendlv.logic.sensation.Geolocation";
 }
 
-Geolocation& Geolocation::latitude(const float &v) noexcept {
+Geolocation& Geolocation::latitude(const double &v) noexcept {
     m_latitude = v;
     return *this;
 }
-float Geolocation::latitude() const noexcept {
+double Geolocation::latitude() const noexcept {
     return m_latitude;
 }
 
-Geolocation& Geolocation::longitude(const float &v) noexcept {
+Geolocation& Geolocation::longitude(const double &v) noexcept {
     m_longitude = v;
     return *this;
 }
-float Geolocation::longitude() const noexcept {
+double Geolocation::longitude() const noexcept {
     return m_longitude;
 }
 
