@@ -92,7 +92,7 @@ VehicleRemoteControl::VehicleRemoteControl(Context* context) :
         // The following part converts vector into char**
         std::vector<char*> argString;
         argString.reserve(arguments.Size());
-        for (int i=0; i<arguments.Size(); i++)
+        for (unsigned int i=0; i<arguments.Size(); i++)
         {
             argString.push_back(const_cast<char*>(arguments[i].CString()));
         }
