@@ -1,5 +1,5 @@
 ##
-# Project testSim	+# Project testStandalone
+# Project testSim
 # This is a test of Urho3D project by Yue Kang	+# This is a test of Urho3D project building by Yue Kang
 # The main purpose is to build up a Docker image combining Urho3D engine and libCluon	+# The purpose of this test project is to find out the possibility and
 #     in order to simulate a simple message-driven vehicle control scenario
