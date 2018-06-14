@@ -119,7 +119,7 @@ void Vehicle::FixedUpdate(float timeStep)
         if (controls_.buttons_ & CTRL_BACK)
             accelerator = -0.5f;
     }
-    else // Remote control by messages (currently not functioning)
+    else // Remote control by messages
     {
         // Read controls
         newSteering = steeringReading;

@@ -80,7 +80,8 @@ void Sample::Start()
         SubscribeToEvent(E_TOUCHBEGIN, URHO3D_HANDLER(Sample, HandleTouchBegin));
 
     // Create logo
-    CreateLogo();
+    // Commented by Yue Kang
+/*    CreateLogo();*/
 
     // Set custom window Title & Icon
     SetWindowTitleAndIcon();
@@ -196,7 +197,8 @@ void Sample::SetWindowTitleAndIcon()
     Graphics* graphics = GetSubsystem<Graphics>();
     Image* icon = cache->GetResource<Image>("Textures/UrhoIcon.png");
     graphics->SetWindowIcon(icon);
-    graphics->SetWindowTitle("Urho3D Sample");
+//    graphics->SetWindowTitle("Urho3D Sample");
+    graphics->SetWindowTitle("Vehicle Example with libCluon and Urho3D");
 }
 
 void Sample::CreateConsoleAndDebugHud()

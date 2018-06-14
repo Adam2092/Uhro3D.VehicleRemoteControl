@@ -41,6 +41,7 @@
 #include <Urho3D/Physics/PhysicsWorld.h>
 #include <Urho3D/Physics/RigidBody.h>
 #include <Urho3D/Resource/ResourceCache.h>
+#include <Urho3D/Resource/Image.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
@@ -235,12 +236,12 @@ void VehicleRemoteControl::CreateScene()
     }
     else std::cout << "VehicleRemoteControl::CreateScene() OK." << std::endl;
 
-    // Test of having a separate window 
-    Window* cameraWindow = new Window(context_);
-//    GetSubsystem<UI>()->GetRoot()->AddChild(cameraWindow);
-    cameraWindow->SetSize(640,480);
-    cameraWindow->SetName("Camera Image");
-//    GetSubsystem<UI>()->GetRoot()->AddChild(cameraWindow);
+//    // Test of having a separate window 
+//    Window* cameraWindow = new Window(context_);
+////    GetSubsystem<UI>()->GetRoot()->AddChild(cameraWindow);
+//    cameraWindow->SetSize(640,480);
+//    cameraWindow->SetName("Camera Image");
+////    GetSubsystem<UI>()->GetRoot()->AddChild(cameraWindow);
 }
 
 void VehicleRemoteControl::CreateVehicle()
