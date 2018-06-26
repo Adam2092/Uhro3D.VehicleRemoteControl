@@ -8,12 +8,12 @@ services:
         -   /tmp/.X11-unix:/tmp/.X11-unix
         environment:
         -   DISPLAY=$DISPLAY
-        command: "/opt/testRemoteControl --cid=113 --freq=50"
-
-    urho3d-listener:
+        command: "/opt/testRemoteControl --cid=113 --freq=30"
+        
+    urho3d-test-listener:
         image: adam2092/urho3d-test-control:v0.0.4
-        depend_on:
-        - urho3d-test-control
         network_mode: "host"
         privileged: true
+        depends_on:
+        -   urho3d-test-control
         command: "/opt/Listener --cid=113"
