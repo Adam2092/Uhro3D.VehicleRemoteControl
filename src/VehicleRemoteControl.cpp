@@ -47,26 +47,22 @@
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/UI/Window.h>
+#include <Urho3D/Math/Color.h>
 
 #include "Vehicle.h"
 #include "VehicleRemoteControl.h"
 
-// #include "Sample.h"
-
 #include <Urho3D/DebugNew.h>
 
-// #include <cluon/OD4Session.hpp>
-// #include <cluon/Envelope.hpp> // use header-only here as well 0.0.63
-
-#include "cluon-complete.hpp"
-#include "messages.hpp"
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <utility>
 #include <memory>
+#include <cstdlib>
+#include <cstdio>
 
-const float CAMERA_DISTANCE = 10.0f;
+const float CAMERA_DISTANCE = 40.0f;
 
 // Temp global counter for cout debug in HandlePostUpdate
 // Will be removed
@@ -82,11 +78,12 @@ VehicleRemoteControl::VehicleRemoteControl(Context* context) :
     Vehicle::RegisterObject(context);
 
     CID = 113;
-    FREQ = 50;
+    FREQ = 35;
 
     // By using this macro, static functions in ProcessUtils.h (e.g. ParseArguments()) should be called
     auto arguments = Urho3D::GetArguments();
 //    std::cout << "Received " << arguments.Size() << " arguments." <<std::endl;
+    std::string NAME{"/vircam0"};
     if (0 != arguments.Size())
     {
         // The following part converts vector into char**
@@ -104,23 +101,43 @@ VehicleRemoteControl::VehicleRemoteControl(Context* context) :
         else CID = std::stoi(commandlineArguments["cid"]);
 
         if (0 == commandlineArguments.count("freq"))
-            std::cout << "No freq set. Using default parameter: --freq=50" << std::endl;
+            std::cout << "No freq set. Using default parameter: --freq=35" << std::endl;
         else FREQ = std::stoi(commandlineArguments["freq"]);
+        if (FREQ >= 40)
+            std::cerr << "WARNING: Frequency too high. SharedMemory-related functions (which are time-triggered delegates) might violate allocated time slice." << std::endl;
+        
+        if (0 == commandlineArguments.count("name"))
+            std::cout << "No virtual device name set. Using default parameter: --name=vircam0" << std::endl;
+        else NAME = commandlineArguments["name"];
     }
     else
     {
-        std::cout << "No argument detected. Using default parameters: --cid=113 --freq=50" << std::endl;
+        std::cout << "No argument detected. Using default parameters: --cid=113 --freq=50 --name=vircam0" << std::endl;
     }
 
-    od4 = std::shared_ptr<cluon::OD4Session>(new cluon::OD4Session(CID));
+    od4 = std::shared_ptr<cluon::OD4Session>(new cluon::OD4Session{CID});
 
-    if (od4->isRunning()) {
+    if (od4->isRunning())
+    {
         std::cout << "VehicleRemoteControl::VehicleRemoteControl() OK." << std::endl;
     }
-    else {
+    else
+    {
         std::cerr << "Failed to start OD4Session." << std::endl;
     }
 
+    imgWidth = 640;
+    imgHeight = 480;
+    shm = std::unique_ptr<cluon::SharedMemory>(new cluon::SharedMemory(NAME, imgWidth*imgHeight*sizeof(unsigned)));
+    isImgSharing = false;
+    if (shm && shm->valid())
+    {
+        std::cout << "SharedMemory initialized: " << shm->name() << std::endl;
+    }
+    else
+    {
+        std::cerr << "Failed to initialize SharedMemory." << std::endl;
+    }
 
 }
 
@@ -209,7 +226,7 @@ void VehicleRemoteControl::CreateScene()
     shape->SetTerrain();
 
     // Create 1000 mushrooms in the terrain. Always face outward along the terrain normal
-    const unsigned NUM_MUSHROOMS = 100;
+    const unsigned NUM_MUSHROOMS = 500;
     for (unsigned i = 0; i < NUM_MUSHROOMS; ++i)
     {
         Node* objectNode = scene_->CreateChild("Mushroom");
@@ -236,12 +253,20 @@ void VehicleRemoteControl::CreateScene()
     }
     else std::cout << "VehicleRemoteControl::CreateScene() OK." << std::endl;
 
-//    // Test of having a separate window 
-//    Window* cameraWindow = new Window(context_);
-////    GetSubsystem<UI>()->GetRoot()->AddChild(cameraWindow);
-//    cameraWindow->SetSize(640,480);
-//    cameraWindow->SetName("Camera Image");
-////    GetSubsystem<UI>()->GetRoot()->AddChild(cameraWindow);
+
+//    // Trying to have a separated SDL window for the camera sensor, not functioning yet
+//    /*SDL_Window *window;*/ //
+//    SDL_Init(SDL_INIT_EVERYTHING);              // Initialize SDL2
+
+//    // Create an application window with the following settings:
+//    window = SDL_CreateWindow(
+//        "An SDL2 window",                  // window title
+//        SDL_WINDOWPOS_UNDEFINED,           // initial x position
+//        SDL_WINDOWPOS_UNDEFINED,           // initial y position
+//        imgWidth,                          // width, in pixels
+//        imgHeight,                         // height, in pixels
+//        SDL_WINDOW_OPENGL                  // flags
+//    );
 }
 
 void VehicleRemoteControl::CreateVehicle()
@@ -283,10 +308,14 @@ void VehicleRemoteControl::CreateVehicle()
     //    vehicle_->cameraSensorNode_->SetPosition(/*coor*/);
     auto* cameraSensor = vehicle_->cameraSensorNode_->CreateComponent<Camera>();
     cameraSensor->SetFarClip(300.0f); // Currently the same with the main viewport, might be customized afterwards
+    cameraSensor->SetZoom(1.0f); // Currently set to no zoom, might be customized afterwards
     auto* graphics = GetSubsystem<Graphics>();
-    SharedPtr<Viewport> CS_viewport(new Viewport(context_, scene_, cameraSensor, IntRect(graphics->GetWidth()-32-240, 32, graphics->GetWidth()-32, 32+160)));
+    SharedPtr<Viewport> CS_viewport(new Viewport(context_, scene_, cameraSensor, IntRect(graphics->GetWidth()-32-imgWidth, 32, graphics->GetWidth()-32, 32+imgHeight)));
     GetSubsystem<Renderer>()->SetViewport(1, CS_viewport);
 
+//    // Initiate image pointer
+//    imagePtr = std::shared_ptr<Urho3D::Image>(new Urho3D::Image(context_));
+//    imagePtr-> SetSize(640, 480, 3);
 }
 
 void VehicleRemoteControl::CreateInstructions()
@@ -301,9 +330,11 @@ void VehicleRemoteControl::CreateInstructions()
 //        "F5 to save scene, F7 to load"
 //    );
     instructionText->SetText(
-        "Use mouse/touch to rotate camera\n"
+        "Use mouse / touch to rotate camera\n"
         "F5 to save scene, F7 to load\n"
-        "C to toggle between WASD drive and message-based drive"
+        "C to toggle between WASD drive and message-based drive\n"
+        "M to toggle between enabling / disabling ShM image sharing\n"
+        "(Temp) I to take screenshot"
     );
     instructionText->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.ttf"), 15);
     // The text has multiple rows. Center them in relation to each other
@@ -312,7 +343,7 @@ void VehicleRemoteControl::CreateInstructions()
     // Position the text relative to the screen center
     instructionText->SetHorizontalAlignment(HA_CENTER);
     instructionText->SetVerticalAlignment(VA_CENTER);
-    instructionText->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
+    instructionText->SetPosition(0, ui->GetRoot()->GetHeight() / 4 + 120);
 }
 
 void VehicleRemoteControl::SubscribeToEvents()
@@ -343,11 +374,18 @@ void VehicleRemoteControl::HandleUpdate(StringHash eventType, VariantMap& eventD
 //        }
 
         // Toggle between the two control
-        if (input->GetKeyPress(KEY_C)) 
+        if (input->GetKeyPress(KEY_C))
         {
             vehicle_->isManualControl = !(vehicle_->isManualControl);
             if (vehicle_->isManualControl) std::cout << "Switched to manual (WSAD) control." << std::endl;
             else std::cout << "Switched to message-based control." << std::endl;
+        }
+        // Toggle between enabling / disabling SharedMemory image sharing
+        if (input->GetKeyPress(KEY_M))
+        {
+            isImgSharing = !(isImgSharing);
+            if (isImgSharing) std::cout << "ShM sharing enabled." << std::endl;
+            else std::cout << "ShM sharing disabled." << std::endl;
         }
         // Get movement controls and assign them to the vehicle component. If UI has a focused element, clear controls
         if (!ui->GetFocusElement())
@@ -408,10 +446,56 @@ void VehicleRemoteControl::HandleUpdate(StringHash eventType, VariantMap& eventD
                 if (vehicleNode)
                     vehicle_ = vehicleNode->GetComponent<Vehicle>();
             }
+
+            // Temp: 
+            if (input->GetKeyPress(KEY_I))
+            {
+                auto* graphics = GetSubsystem<Graphics>();
+                std::shared_ptr<Urho3D::Image> scrPtr = std::shared_ptr<Urho3D::Image>(new Urho3D::Image(context_));
+                scrPtr-> SetSize(graphics->GetWidth(), graphics->GetHeight(), 3);
+                graphics->TakeScreenShot(*scrPtr);
+                if (scrPtr->SaveBMP("Test.bmp"))
+                    std::cout << "Screenshot saved." << std::endl;
+                IntRect* temp = new IntRect(graphics->GetWidth()-32-imgWidth, 32, graphics->GetWidth()-32, 32+imgHeight);
+                
+                Image* camImg = scrPtr->GetSubimage(*temp);
+//                camImg->Resize(imgWidth, imgHeight);
+                if (camImg->SaveBMP("TestCam.bmp"))
+                {
+                    std::cout << "Camera saved." << std::endl;
+                    // Test for SDL window
+//                    // Create an application window with the following settings:
+//                    window = SDL_CreateWindow(
+//                        "An SDL2 window",                  // window title
+//                        SDL_WINDOWPOS_UNDEFINED,           // initial x position
+//                        SDL_WINDOWPOS_UNDEFINED,           // initial y position
+//                        imgWidth,                          // width, in pixels
+//                        imgHeight,                         // height, in pixels
+//                        SDL_WINDOW_OPENGL                  // flags
+//                    );
+
+//                    SDL_Surface* loadImg = SDL_LoadBMP("TestCam.bmp");
+//                    if (window != NULL)
+//                    {
+//                        SDL_Renderer* ren = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+//                        std::cout << "0..." << SDL_GetError() << std::endl;
+//                        if (ren != NULL)
+//                        {
+//                            std::cout << "1..." << SDL_GetError() << std::endl;
+//                            SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, loadImg);
+//                            std::cout << "2..." << SDL_GetError() << std::endl;
+//                            SDL_RenderCopy(ren, tex, NULL, NULL);
+//                            std::cout << "3..." << SDL_GetError() << std::endl;
+//                            SDL_RenderPresent(ren);
+//                            std::cout << "4..." << SDL_GetError() << std::endl;
+//                        }
+//                    }
+//                    free(camImg);
+                }
+            }
         }
         else vehicle_->controls_.Set(CTRL_FORWARD | CTRL_BACK | CTRL_LEFT | CTRL_RIGHT, false);
-
-    }
+    } // end of if(vehicle_)
 }
 
 
@@ -467,7 +551,8 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
     dir = dir * Quaternion(vehicle_->controls_.yaw_, Vector3::UP);
     dir = dir * Quaternion(vehicle_->controls_.pitch_, Vector3::RIGHT);
 
-    Vector3 cameraTargetPos = vehicleNode->GetPosition() - dir * Vector3(0.0f, 0.0f, CAMERA_DISTANCE);
+//    Vector3 cameraTargetPos = vehicleNode->GetPosition() - dir * Vector3(0.0f, 0.0f, CAMERA_DISTANCE);
+    Vector3 cameraTargetPos = vehicleNode->GetPosition() - dir * Vector3(-15.0f, 0.0f, CAMERA_DISTANCE); // Added an offset to avoid the vehicle being covered by the camera image
     Vector3 cameraStartPos = vehicleNode->GetPosition();
 
     // Raycast camera against static objects (physics collision mask 2)
@@ -482,13 +567,52 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
     cameraNode_->SetPosition(cameraTargetPos);
     cameraNode_->SetRotation(dir);
 
-//    // Manual debug for camera sensor coordinates
-//    if (5 == count)
-//    {
-//        count = 0;
-//        std::cout << "CameraSonsorBody cordinates:" << std::endl;
-//        Vector3 pos2 = vehicle_->cameraSensorBody_->GetPosition();
-//        std::cout << "(" << std::setprecision(2) << pos2.x_ << ", " << std::setprecision(2) << pos2.y_ << ", " << std::setprecision(2) << pos2.z_ << ")" << std::endl;
-//    }
-//    else count++;
+    // ShM image sharing
+    if (od4->isRunning() && isImgSharing && shm->valid())
+    {
+        auto imgShare{[this]() -> bool
+            {
+               auto* graphics = GetSubsystem<Graphics>();
+                std::shared_ptr<Urho3D::Image> scrPtr = std::shared_ptr<Urho3D::Image>(new Urho3D::Image(context_));
+                scrPtr-> SetSize(graphics->GetWidth(), graphics->GetHeight(), 3);
+                graphics->TakeScreenShot(*scrPtr);
+                IntRect* temp = new IntRect(graphics->GetWidth()-32-imgWidth, 32, graphics->GetWidth()-32, 32+imgHeight);
+                
+                Image* camImgOrigin = scrPtr->GetSubimage(*temp);
+                SharedPtr<Image> camImg{camImgOrigin->ConvertToRGBA()};
+                
+//                std::cout << "Cam image is ";
+//                if (!camImg->IsCompressed()) std::cout << "not ";
+//                std::cout << "compressed." << std::endl;
+//                std::cout << "The camImage is " << camImg->GetWidth() << " x " << camImg->GetHeight() << " x " << camImg->GetDepth() << " in size." << std::endl;
+//                Color samplePix{camImg->GetPixel(camImg->GetWidth()/2, camImg->GetHeight()/2)};
+//                std::cout << "The sample pixel is (" << samplePix.r_ << ", " << samplePix.g_ << ", " << samplePix.b_ << ") at coor. (" << camImg->GetWidth()/2 << ", " << camImg->GetHeight()/2 << ")" << std::endl;
+//                unsigned pixUInt = samplePix.ToUInt();
+//                std::cout << "ToUInt() direct result: " << pixUInt << std::endl;
+//                std::cout << "Try to decode: ";
+//                unsigned r = (pixUInt >> 0u) & 0xffu;
+//                unsigned g = (pixUInt >> 8u) & 0xffu;
+//                unsigned b = (pixUInt >> 16u) & 0xffu;
+//                std:: cout << "(" << r << ", " << g << ", " << b << ")" << std::endl;
+                // Send image to ShM
+                shm->lock();
+//                std::cout << "Testing: sending to ShM..." << std::endl;
+//                std::cout << "Shm Name: " << shm->name() << "; Size: " << shm->size() << std::endl;
+
+                unsigned *dataPtr = reinterpret_cast<unsigned *>(shm->data());
+                for (uint16_t i=0; i<imgWidth; i++)
+                    for (uint16_t j=0; j<imgHeight; j++)
+                    {
+                        Color samplePix{camImg->GetPixel(i,j)};
+                        *dataPtr++ = samplePix.ToUInt();
+                    }
+
+                shm->unlock();
+                shm->notifyAll();
+                free(camImgOrigin);
+                return false;
+            }
+        };
+        od4->timeTrigger(FREQ,imgShare);
+    }
 }

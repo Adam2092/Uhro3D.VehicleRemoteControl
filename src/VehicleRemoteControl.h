@@ -28,6 +28,9 @@
 #include "cluon-complete.hpp"
 #include "messages.hpp"
 
+//#include <Urho3D/ThirdParty/SDL/SDL.h>
+//#include <Urho3D/ThirdParty/GLEW/glew.h>
+
 namespace Urho3D
 {
 
@@ -77,9 +80,22 @@ private:
     std::mutex dataMutex{};
     opendlv::proxy::PedalPositionRequest ppr;
     opendlv::proxy::GroundSteeringRequest gsr;
-    int CID;
-    float FREQ;
+    uint16_t CID;
+    uint16_t FREQ;
+
+//    // Image pointer for the camera
+//    std::shared_ptr<Urho3D::Image> imagePtr;
+
+//    // Pointer to SDL window
+//    SDL_Window *window;
+
+    // Pointer to GL
+    
+    // Camera image size
+    uint16_t imgHeight, imgWidth;
 
     // Cluon SharedMemory for image transfer
-    std::shared_ptr<cluon::SharedMemory> shm;
+    std::unique_ptr<cluon::SharedMemory> shm;
+    // 
+    bool isImgSharing;
 };
