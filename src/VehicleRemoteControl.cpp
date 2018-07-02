@@ -78,7 +78,7 @@ VehicleRemoteControl::VehicleRemoteControl(Context* context) :
     Vehicle::RegisterObject(context);
 
     CID = 113;
-    FREQ = 35;
+    FREQ = 30;
 
     // By using this macro, static functions in ProcessUtils.h (e.g. ParseArguments()) should be called
     auto arguments = Urho3D::GetArguments();
@@ -101,7 +101,7 @@ VehicleRemoteControl::VehicleRemoteControl(Context* context) :
         else CID = std::stoi(commandlineArguments["cid"]);
 
         if (0 == commandlineArguments.count("freq"))
-            std::cout << "No freq set. Using default parameter: --freq=35" << std::endl;
+            std::cout << "No freq set. Using default parameter: --freq=30" << std::endl;
         else FREQ = std::stoi(commandlineArguments["freq"]);
         if (FREQ >= 40)
             std::cerr << "WARNING: Frequency too high. SharedMemory-related functions (which are time-triggered delegates) might violate allocated time slice." << std::endl;
