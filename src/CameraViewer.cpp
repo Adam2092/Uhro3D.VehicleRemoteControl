@@ -93,20 +93,16 @@ int main(int argc, char** argv)
         shm.wait();
         shm.lock();
         SDL_LockSurface(surface);
-        unsigned *dataPtr = reinterpret_cast<unsigned *>(shm.data());
+        uint8_t *dataPtr = reinterpret_cast<uint8_t *>(shm.data());
         for (int i=0; i<imgWidth; i++)
             for (int j=0; j<imgHeight; j++)
             {
-            unsigned pixel = *dataPtr;
-                // Rearrange RGBA to BGRA (from low to high)
-                uint8_t r = (pixel >> 0u) & 0xffu;
-                uint8_t g = (pixel >> 8u) & 0xffu;
-                uint8_t b = (pixel >> 16u) & 0xffu;
-                uint8_t a = (pixel >> 24u) & 0xffu;
-                pixel = (a << 24u) | (r << 16u) | (g << 8u) | b;
-//                set_pixel(surface, i, j, *dataPtr);
+                uint8_t r = (*dataPtr++); // & 0xffu;
+                uint8_t g = (*dataPtr++); // & 0xffu;
+                uint8_t b = (*dataPtr++); // & 0xffu;
+                uint8_t a = 255;
+                uint32_t pixel = ((uint32_t)a << 24u) | ((uint32_t)r << 16u) | ((uint32_t)g << 8u) | (uint32_t)b;
                 set_pixel(surface, i, j, pixel);
-                dataPtr++;
             }
         SDL_UnlockSurface(surface);
         SDL_UpdateWindowSurface(window);
