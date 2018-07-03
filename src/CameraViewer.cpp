@@ -24,14 +24,14 @@ int main(int argc, char** argv)
     auto cmdlArg = cluon::getCommandlineArguments(argc, argv);
 //    unsigned CID = 113;
     std::string NAME{"/vircam0"};
-    unsigned FREQ = 20;
+//    unsigned FREQ = 20; // not necessary as data-triggered
 
 //    if ( 0 == cmdlArg.count("cid")) std::cout << "No CID argument detected, using default (--cid=113) now." << std::endl;
 //    else CID = std::stoi(cmdlArg["cid"]);
     if ( 0 == cmdlArg.count("name")) std::cout << "No NAME argument detected, using default (--name=/vircam0) now." << std::endl;
     else NAME = cmdlArg["name"];
-    if ( 0 == cmdlArg.count("freq")) std::cout << "No FREQ argument detected, using default (--freq=20) now." << std::endl;
-    else FREQ = std::stoi(cmdlArg["freq"]);
+//    if ( 0 == cmdlArg.count("freq")) std::cout << "No FREQ argument detected, using default (--freq=20) now." << std::endl;
+//    else FREQ = std::stoi(cmdlArg["freq"]); // not necessary as data-triggered
     
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_Window* window = SDL_CreateWindow("Camera Viewer", 5 /*SDL_WINDOWPOS_UNDEFINED*/, 5 /*SDL_WINDOWPOS_UNDEFINED*/, imgWidth, imgHeight, 0 /*SDL_WINDOW_INPUT_GRABBED*/);
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
             }
     SDL_UnlockSurface(surface);
     SDL_UpdateWindowSurface(window);
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(3000)); // temporary wait for the main sim to be initialised
     
 //    std::cout << NAME << std::endl;
     cluon::SharedMemory shm{NAME};
@@ -67,10 +67,10 @@ int main(int argc, char** argv)
         std::cout << "SharedMemory " << NAME << " connected." << std::endl << "Press M in Urho3D sim window to toggle Camera view." << std::endl;
         std::cout << "Press ESC in Camera Viewer to quit (before quitting the main Urho3D sim window!!)" << std::endl;
     }
-    int delay = 1000/FREQ;
+//    int delay = 1000/FREQ; // not necessary as data-triggered
     while (shm.valid())
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+//        std::this_thread::sleep_for(std::chrono::milliseconds(delay)); // not necessary as data-triggered
         
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
         SDL_UpdateWindowSurface(window);
         
         shm.unlock();
-        shm.notifyAll();
+//        shm.notifyAll(); // Consumers do not need to notify
     }
     
     SDL_DestroyWindow(window);
