@@ -2,7 +2,7 @@ FROM ubuntu:18.04 as builder
 MAINTAINER Yue Kang yuek@chalmers.se
 RUN apt update && \
     apt install -y\
-        ca-certificates cmake g++ make nano \
+        ca-certificates cmake g++ make nano git\
         libglu1-mesa-dev freeglut3-dev mesa-common-dev \
         libx11-dev libxrandr-dev libasound2-dev libsdl2-dev
 ADD . /opt/sources
@@ -10,8 +10,9 @@ WORKDIR /opt/sources
 RUN cd /opt/sources && ./Urho3D-build.sh
 RUN mkdir build && \
     cd build && \
-    cmake .. && make && \
-    cp -r ../bin /tmp && \
+    cmake .. && make && mkdir /tmp/bin && \
+    cp -r ../Urho3D/bin/Data /tmp/bin && \
+    cp -r ../Urho3D/bin/CoreData /tmp/bin && \
     cp ./testRemoteControl /tmp/bin && \
     cp ./Listener /tmp/bin && \
     cp ./CameraViewer /tmp/bin
@@ -23,8 +24,8 @@ RUN apt update && \
     apt install -y \
     libglu1-mesa freeglut3 mesa-common-dev \
         libx11-dev libxrandr-dev libasound2 libsdl2-dev
-ADD ./bin /opt
+# ADD ./bin /opt
 WORKDIR /opt
-COPY --from=builder /tmp/bin/* .
+COPY --from=builder /tmp/bin/* /opt/
 
 CMD ["/opt/testRemoteControl"]
