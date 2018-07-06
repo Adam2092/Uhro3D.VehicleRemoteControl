@@ -8,14 +8,16 @@ RUN apt update && \
 ADD . /opt/sources
 WORKDIR /opt/sources
 RUN cd /opt/sources && ./Urho3D-build.sh
+RUN cd Urho3D/bin && touch dirData.tar && \
+    tar -rf dirData.tar Data && tar -rf dirData.tar CoreData && \
+    cd ../../
 RUN mkdir build && \
     cd build && \
     cmake .. && make && mkdir /tmp/bin && \
-    cp -r ../Urho3D/bin/Data /tmp/bin && \
-    cp -r ../Urho3D/bin/CoreData /tmp/bin && \
     cp ./testRemoteControl /tmp/bin && \
     cp ./Listener /tmp/bin && \
-    cp ./CameraViewer /tmp/bin
+    cp ./CameraViewer /tmp/bin && \
+    cp ../Urho3D/bin/dirData.tar /tmp/bin
 
 # Deploy.
 FROM ubuntu:18.04
@@ -24,8 +26,8 @@ RUN apt update && \
     apt install -y \
     libglu1-mesa freeglut3 mesa-common-dev \
         libx11-dev libxrandr-dev libasound2 libsdl2-dev
-# ADD ./bin /opt
 WORKDIR /opt
-COPY --from=builder /tmp/bin/* /opt/
+COPY --from=builder /tmp/bin /opt/
+RUN cd /opt && tar -xf dirData.tar
 
 CMD ["/opt/testRemoteControl"]
