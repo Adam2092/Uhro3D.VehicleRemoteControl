@@ -80,8 +80,7 @@ void Sample::Start()
         SubscribeToEvent(E_TOUCHBEGIN, URHO3D_HANDLER(Sample, HandleTouchBegin));
 
     // Create logo
-    // Commented by Yue Kang
-/*    CreateLogo();*/
+    CreateLogo();
 
     // Set custom window Title & Icon
     SetWindowTitleAndIcon();
@@ -197,8 +196,7 @@ void Sample::SetWindowTitleAndIcon()
     Graphics* graphics = GetSubsystem<Graphics>();
     Image* icon = cache->GetResource<Image>("Textures/UrhoIcon.png");
     graphics->SetWindowIcon(icon);
-//    graphics->SetWindowTitle("Urho3D Sample");
-    graphics->SetWindowTitle("Vehicle Example with libCluon and Urho3D");
+    graphics->SetWindowTitle("Urho3D Sample");
 }
 
 void Sample::CreateConsoleAndDebugHud()
@@ -282,21 +280,21 @@ void Sample::HandleKeyDown(StringHash /*eventType*/, VariantMap& eventData)
         // Texture quality
         else if (key == '1')
         {
-            int quality = renderer->GetTextureQuality();
+            auto quality = (unsigned)renderer->GetTextureQuality();
             ++quality;
             if (quality > QUALITY_HIGH)
                 quality = QUALITY_LOW;
-            renderer->SetTextureQuality(quality);
+            renderer->SetTextureQuality((MaterialQuality)quality);
         }
 
         // Material quality
         else if (key == '2')
         {
-            int quality = renderer->GetMaterialQuality();
+            auto quality = (unsigned)renderer->GetMaterialQuality();
             ++quality;
             if (quality > QUALITY_HIGH)
                 quality = QUALITY_LOW;
-            renderer->SetMaterialQuality(quality);
+            renderer->SetMaterialQuality((MaterialQuality)quality);
         }
 
         // Specular lighting
