@@ -128,7 +128,7 @@ VehicleRemoteControl::VehicleRemoteControl(Context* context) :
 
     imgWidth = 640;
     imgHeight = 480;
-    uint32_t const BPP = 24; // bits per pixel
+    uint32_t const BPP = 32; // bits per pixel
     uint32_t const SIZE = imgWidth*imgHeight*BPP/8;
     shm = std::unique_ptr<cluon::SharedMemory>(new cluon::SharedMemory(NAME, SIZE));
     isImgSharing = false;
@@ -602,18 +602,45 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
 //                std::cout << "Shm Name: " << shm->name() << "; Size: " << shm->size() << std::endl;
 
                 uint8_t *dataPtr = reinterpret_cast<uint8_t *>(shm->data());
-                for (uint16_t i=0; i<imgWidth; i++)
-                    for (uint16_t j=0; j<imgHeight; j++)
-                    {
-                        Color samplePix{camImg->GetPixel(i,j)};
-                        unsigned pixel_UInt = samplePix.ToUInt();
-                        uint8_t r = (pixel_UInt >> 0u) & 0xffu;
-                        *dataPtr++ = r;
-                        uint8_t g = (pixel_UInt >> 8u) & 0xffu;
-                        *dataPtr++ = g;
-                        uint8_t b = (pixel_UInt >> 16u) & 0xffu;
-                        *dataPtr++ = b;
-                    }
+//                unsigned *dataPtr = reinterpret_cast<unsigned *>(shm->data());
+//                unsigned char *dataPtr = reinterpret_cast<unsigned char *>(shm->data());
+//                unsigned char *imgDataPtr = camImg->GetData();
+//                uint32_t *imgDataPtr = reinterpret_cast<uint32_t *>(camImg->GetData());
+                uint8_t *imgDataPtr = reinterpret_cast<uint8_t *>(camImg->GetData());
+
+//                for (uint16_t i=0; i<imgWidth; i++)
+//                    for (uint16_t j=0; j<imgHeight; j++)
+//                    {
+//                        Color samplePix{camImg->GetPixel(j,i)};
+//                        unsigned pixel_UInt = samplePix.ToUInt();
+//                        uint8_t r = (pixel_UInt >> 0u) & 0xffu;
+//                        *dataPtr++ = r;
+//                        uint8_t g = (pixel_UInt >> 8u) & 0xffu;
+//                        *dataPtr++ = g;
+//                        uint8_t b = (pixel_UInt >> 16u) & 0xffu;
+//                        *dataPtr++ = b;
+//                        uint8_t a = (pixel_UInt >> 24u) & 0xffu;
+//                        *dataPtr++ = a;
+//                    }
+//
+//                    *dataPtr++ = *imgDataPtr++;
+
+                //TODO: replace here by memcpy
+//                for (unsigned i=0; i<imgWidth*imgHeight; i++)
+                for (unsigned i=0; i<imgWidth*imgHeight*4; i++)
+                {
+//                    uint32_t pixel_UInt = *imgDataPtr++;
+//                    uint8_t r = (pixel_UInt >> 0u) & 0xffu;
+//                    *dataPtr++ = r;
+//                    uint8_t g = (pixel_UInt >> 8u) & 0xffu;
+//                    *dataPtr++ = g;
+//                    uint8_t b = (pixel_UInt >> 16u) & 0xffu;
+//                    *dataPtr++ = b;
+//                    uint8_t a = (pixel_UInt >> 24u) & 0xffu;
+//                    *dataPtr++ = a;
+                    *dataPtr++ = *imgDataPtr++;
+                }
+
 
                 shm->unlock();
                 shm->notifyAll();
