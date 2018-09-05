@@ -1,35 +1,51 @@
 version: '2'
 services:
-    urho3d-test-control:
-        image: adam2092/urho3d-test-control:v0.0.5.3
+# $ docker run --rm -ti --ipc=host --net=host --privileged -v /tmp:/tmp -e DISPLAY=$DISPLAY adam2092/urho3d-test-control:v0.0.5.3 /opt/testRemoteControl --cid=113 --freq=30 --name=/vircam0
+    urho3d-application:
+        image: adam2092/urho3d-test-control:v0.0.6
+        ipc: "host"
         network_mode: "host"
         privileged: true
         volumes:
-        -   /tmp/.X11-unix:/tmp/.X11-unix
-        -   /dev/shm:/dev/shm
+        -   /tmp:/tmp
         environment:
         -   DISPLAY=$DISPLAY
-        -   CLUON_SHAREDMEMORY_POSIX=1
         command: "/opt/testRemoteControl --cid=113 --freq=30 --name=/vircam0"
-        
-#    urho3d-test-listener:
-#        image: adam2092/urho3d-test-control:v0.0.5
-#        network_mode: "host"
-#        privileged: true
-#        depends_on:
-#        -   urho3d-test-control
-#        command: "/opt/Listener --cid=113"
-        
-    urho3d-test-cameraviewer:
-        image: adam2092/urho3d-test-control:v0.0.5.3
-        network_mode: "host"
-        privileged: true
-        volumes:
-        -   /tmp/.X11-unix:/tmp/.X11-unix
-        -   /dev/shm:/dev/shm
+
+# $ docker run --rm -ti --ipc=host -e DISPLAY=$DISPLAY -v /tmp:/tmp chalmersrevere/argb2i420-multi:v0.0.1 --in=/vircam0 --width=640 --height=480 --abgr --out=imgout.i420
+    argb2i420:
+        image: chalmersrevere/argb2i420-multi:v0.0.1
         depends_on:
-        -   urho3d-test-control
+        -   urho3d-application
+        restart: on-failure
+        ipc: "host"
+        volumes:
+        -   /tmp:/tmp
         environment:
         -   DISPLAY=$DISPLAY
-        -   CLUON_SHAREDMEMORY_POSIX=1
-        command: "/opt/CameraViewer --cid=113 --name=/vircam0"
+        command: "--in=/vircam0 --width=640 --height=480 --abgr --out=imgout.i420 --verbose"
+
+# $ docker run --rm -ti --net=host --ipc=host -v /tmp:/tmp testurhobuilder_video-x264-encoder-amd64 --cid=113 --name=imgout.i420 --width=640 --height=480 --verbose
+    video-x264-encoder-amd64:
+        build:
+            context: https://github.com/chalmers-revere/opendlv-video-x264-encoder.git
+            dockerfile: Dockerfile.amd64
+        restart: on-failure
+        depends_on:
+        -   argb2i420
+        network_mode: "host"
+        ipc: "host"
+        volumes:
+        - /tmp:/tmp
+        command: "--cid=113 --name=imgout.i420 --width=640 --height=480"
+
+# $ docker run --rm -ti --net=host -e OD4SESSION_CID=113 -p 8081:8081 chalmersrevere/opendlv-vehicle-view-multi:v0.0.36
+    vehicle-view-web:
+        image: chalmersrevere/opendlv-vehicle-view-multi:v0.0.36
+        restart: on-failure
+        network_mode: "host"
+        environment:
+        -   OD4SESSION_CID=113
+        ports:
+        -   8081:8081
+
