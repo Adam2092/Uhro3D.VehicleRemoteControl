@@ -2,7 +2,7 @@ version: '2'
 services:
 # $ docker run --rm -ti --ipc=host --net=host --privileged -v /tmp:/tmp -e DISPLAY=$DISPLAY adam2092/urho3d-test-control:v0.0.5.3 /opt/testRemoteControl --cid=113 --freq=30 --name=/vircam0
     urho3d-application:
-        image: adam2092/urho3d-test-control:v0.0.6
+        image: adam2092/urho3d-test-control:v0.0.6.1
         ipc: "host"
         network_mode: "host"
         privileged: true
