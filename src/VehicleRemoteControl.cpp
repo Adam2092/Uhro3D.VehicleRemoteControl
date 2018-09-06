@@ -608,39 +608,8 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
 //                uint32_t *imgDataPtr = reinterpret_cast<uint32_t *>(camImg->GetData());
                 uint8_t *imgDataPtr = reinterpret_cast<uint8_t *>(camImg->GetData());
 
-//                for (uint16_t i=0; i<imgWidth; i++)
-//                    for (uint16_t j=0; j<imgHeight; j++)
-//                    {
-//                        Color samplePix{camImg->GetPixel(j,i)};
-//                        unsigned pixel_UInt = samplePix.ToUInt();
-//                        uint8_t r = (pixel_UInt >> 0u) & 0xffu;
-//                        *dataPtr++ = r;
-//                        uint8_t g = (pixel_UInt >> 8u) & 0xffu;
-//                        *dataPtr++ = g;
-//                        uint8_t b = (pixel_UInt >> 16u) & 0xffu;
-//                        *dataPtr++ = b;
-//                        uint8_t a = (pixel_UInt >> 24u) & 0xffu;
-//                        *dataPtr++ = a;
-//                    }
-//
-//                    *dataPtr++ = *imgDataPtr++;
-
-                //TODO: replace here by memcpy
-//                for (unsigned i=0; i<imgWidth*imgHeight; i++)
-                for (unsigned i=0; i<imgWidth*imgHeight*4; i++)
-                {
-//                    uint32_t pixel_UInt = *imgDataPtr++;
-//                    uint8_t r = (pixel_UInt >> 0u) & 0xffu;
-//                    *dataPtr++ = r;
-//                    uint8_t g = (pixel_UInt >> 8u) & 0xffu;
-//                    *dataPtr++ = g;
-//                    uint8_t b = (pixel_UInt >> 16u) & 0xffu;
-//                    *dataPtr++ = b;
-//                    uint8_t a = (pixel_UInt >> 24u) & 0xffu;
-//                    *dataPtr++ = a;
-                    *dataPtr++ = *imgDataPtr++;
-                }
-
+//                for (unsigned i=0; i<imgWidth*imgHeight*4; i++) *dataPtr++ = *imgDataPtr++;
+                memcpy(dataPtr, camImg->GetData(), imgWidth*imgHeight*4);
 
                 shm->unlock();
                 shm->notifyAll();
