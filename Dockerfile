@@ -1,4 +1,4 @@
-FROM urho3d-builder:latest as builder
+FROM urho3d-builder:v0.2 as builder
 MAINTAINER Yue Kang yuek@chalmers.se
 ADD . /opt/sources
 WORKDIR /opt/sources
