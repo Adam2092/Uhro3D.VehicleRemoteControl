@@ -5,6 +5,7 @@ WORKDIR /opt/sources
 RUN mkdir build && \
     cd build && cmake .. && make && \
     cp -r ../Urho3D/bin/ /tmp && \
+    cp ../data/*.png /tmp/bin/Data/Textures/ && \
     cp ./testRemoteControl /tmp/bin && \
     cp ./Listener /tmp/bin && \
     cp ./CameraViewer /tmp/bin
