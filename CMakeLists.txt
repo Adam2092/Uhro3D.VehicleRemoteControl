@@ -39,13 +39,15 @@ include_directories(${CMAKE_SOURCE_DIR}/Urho3D/include/Urho3D/ThirdParty)
 
 # add_executable(${TARGET_NAME} ${CMAKE_SOURCE_DIR}/VehicleDemo.cpp ${CMAKE_SOURCE_DIR}/Vehicle.cpp ${CMAKE_SOURCE_DIR}/messages.cpp ${CMAKE_SOURCE_DIR}/libUrho3D.a)
 
-add_executable(${TARGET_NAME} ${CMAKE_SOURCE_DIR}/src/VehicleRemoteControl.cpp ${CMAKE_SOURCE_DIR}/src/Vehicle.cpp ${CMAKE_SOURCE_DIR}/src/messages.cpp)
+#add_executable(${TARGET_NAME} ${CMAKE_SOURCE_DIR}/src/VehicleRemoteControl.cpp ${CMAKE_SOURCE_DIR}/src/Vehicle.cpp ${CMAKE_SOURCE_DIR}/src/messages.cpp)
+add_executable(${TARGET_NAME} ${CMAKE_SOURCE_DIR}/src/VehicleRemoteControl.cpp ${CMAKE_SOURCE_DIR}/src/Vehicle.cpp)
 
 find_library(LIB3D libUrho3D.a ${CMAKE_SOURCE_DIR}/Urho3D/lib)
 target_link_libraries(${TARGET_NAME} ${LIB3D} pthread dl GL rt SDL2)
 # -lrt for SharedMemory
 
-add_executable(Listener ${CMAKE_CURRENT_SOURCE_DIR}/src/Listener.cpp ${CMAKE_SOURCE_DIR}/src/messages.cpp)
+# add_executable(Listener ${CMAKE_CURRENT_SOURCE_DIR}/src/Listener.cpp ${CMAKE_SOURCE_DIR}/src/messages.cpp)
+add_executable(Listener ${CMAKE_CURRENT_SOURCE_DIR}/src/Listener.cpp)
 target_link_libraries(Listener pthread)
 
 add_executable(CameraViewer ${CMAKE_CURRENT_SOURCE_DIR}/src/CameraViewer.cpp)
