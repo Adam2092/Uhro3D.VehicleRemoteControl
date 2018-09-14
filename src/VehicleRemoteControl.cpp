@@ -78,7 +78,8 @@ VehicleRemoteControl::VehicleRemoteControl(Context* context) :
     Vehicle::RegisterObject(context);
 
     CID = 113;
-    FREQ = 30;
+    FREQ_SHM = 30;
+    FREQ_MSG = 100;
 
     // By using this macro, static functions in ProcessUtils.h (e.g. ParseArguments()) should be called
     auto arguments = Urho3D::GetArguments();
@@ -100,12 +101,15 @@ VehicleRemoteControl::VehicleRemoteControl(Context* context) :
             std::cout << "No cid set. Using default parameter: --cid=113" << std::endl;
         else CID = std::stoi(commandlineArguments["cid"]);
 
-        if (0 == commandlineArguments.count("freq"))
-            std::cout << "No freq set. Using default parameter: --freq=30" << std::endl;
-        else FREQ = std::stoi(commandlineArguments["freq"]);
-        if (FREQ >= 40)
+        if (0 == commandlineArguments.count("freq_shm"))
+            std::cout << "No freq set for SharedMemory. Using default parameter: --freq_shm=30" << std::endl;
+        else FREQ_SHM = std::stoi(commandlineArguments["freq_shm"]);
+        if (FREQ_SHM >= 40)
             std::cerr << "WARNING: Frequency too high. SharedMemory-related functions (which are time-triggered delegates) might violate allocated time slice." << std::endl;
-        
+        if (0 == commandlineArguments.count("freq_msg"))
+            std::cout << "No freq set for message broadcasting. Using default parameter: --freq_msg=100" << std::endl;
+        else FREQ_MSG = std::stoi(commandlineArguments["freq_msg"]);
+
         if (0 == commandlineArguments.count("name"))
             std::cout << "No virtual device name set. Using default parameter: --name=vircam0" << std::endl;
         else NAME = commandlineArguments["name"];
@@ -544,7 +548,7 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
             }// end of lambda function
         };// end of sendMsgs
 
-        od4->timeTrigger(FREQ,sendMsgs);
+        od4->timeTrigger(FREQ_MSG,sendMsgs);
     }//end of "send messages"
 
     // Physics update has completed. Position camera behind vehicle
@@ -617,6 +621,6 @@ void VehicleRemoteControl::HandlePostUpdate(StringHash eventType, VariantMap& ev
                 return false;
             }
         };
-        od4->timeTrigger(FREQ,imgShare);
+        od4->timeTrigger(FREQ_SHM,imgShare);
     }
 }

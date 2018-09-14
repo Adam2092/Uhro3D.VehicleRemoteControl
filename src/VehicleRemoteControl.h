@@ -81,7 +81,8 @@ private:
     opendlv::proxy::PedalPositionRequest ppr;
     opendlv::proxy::GroundSteeringRequest gsr;
     uint16_t CID;
-    uint16_t FREQ;
+    uint16_t FREQ_SHM; // SharedMemory update frequency
+    uint16_t FREQ_MSG; // Message broadcast frequency
 
 //    // Image pointer for the camera
 //    std::shared_ptr<Urho3D::Image> imagePtr;
